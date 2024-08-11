@@ -25,7 +25,7 @@ use crate::body::{Body, Incoming as IncomingBody};
 use crate::client::dispatch::{Callback, SendWhen, TrySendError};
 use crate::common::io::Compat;
 use crate::common::time::Time;
-use crate::ext::Protocol;
+use crate::ext::{FramePriority, FrameStreamDependency, Protocol, PseudoType};
 use crate::headers;
 use crate::proto::h2::UpgradedSendStream;
 use crate::proto::Dispatched;
@@ -49,7 +49,7 @@ type ConnEof = oneshot::Receiver<Infallible>;
 // for performance.
 const DEFAULT_CONN_WINDOW: u32 = 1024 * 1024 * 5; // 5mb
 const DEFAULT_STREAM_WINDOW: u32 = 1024 * 1024 * 2; // 2mb
-const DEFAULT_MAX_FRAME_SIZE: u32 = 1024 * 16; // 16kb
+const _DEFAULT_MAX_FRAME_SIZE: u32 = 1024 * 16; // 16kb
 const DEFAULT_MAX_SEND_BUF_SIZE: usize = 1024 * 1024; // 1mb
 const DEFAULT_MAX_HEADER_LIST_SIZE: u32 = 1024 * 16; // 16kb
 
@@ -78,6 +78,12 @@ pub(crate) struct Config {
     pub(crate) max_pending_accept_reset_streams: Option<usize>,
     pub(crate) header_table_size: Option<u32>,
     pub(crate) max_concurrent_streams: Option<u32>,
+
+    // Extend configuration controlling h2
+    pub(crate) enable_push: bool,
+    pub(crate) headers_frame_pseudo_order: Option<&'static [PseudoType; 4]>,
+    pub(crate) headers_frame_priority: Option<FrameStreamDependency>,
+    pub(crate) virtual_streams_priorities: Option<&'static [FramePriority]>,
 }
 
 impl Default for Config {
@@ -87,7 +93,7 @@ impl Default for Config {
             initial_conn_window_size: DEFAULT_CONN_WINDOW,
             initial_stream_window_size: DEFAULT_STREAM_WINDOW,
             initial_max_send_streams: DEFAULT_INITIAL_MAX_SEND_STREAMS,
-            max_frame_size: Some(DEFAULT_MAX_FRAME_SIZE),
+            max_frame_size: None,
             max_header_list_size: DEFAULT_MAX_HEADER_LIST_SIZE,
             keep_alive_interval: None,
             keep_alive_timeout: Duration::from_secs(20),
@@ -97,6 +103,12 @@ impl Default for Config {
             max_pending_accept_reset_streams: None,
             header_table_size: None,
             max_concurrent_streams: None,
+
+            // Extend configuration controlling h2
+            enable_push: true,
+            headers_frame_pseudo_order: None,
+            headers_frame_priority: None,
+            virtual_streams_priorities: None,
         }
     }
 }
@@ -109,7 +121,10 @@ fn new_builder(config: &Config) -> Builder {
         .initial_connection_window_size(config.initial_conn_window_size)
         .max_header_list_size(config.max_header_list_size)
         .max_send_buffer_size(config.max_send_buffer_size)
-        .enable_push(false);
+        .enable_push(config.enable_push)
+        .headers_frame_pseudo_order(config.headers_frame_pseudo_order)
+        .headers_frame_priority(config.headers_frame_priority)
+        .virtual_streams_priorities(config.virtual_streams_priorities);
     if let Some(max) = config.max_frame_size {
         builder.max_frame_size(max);
     }

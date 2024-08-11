@@ -465,6 +465,53 @@ where
         self
     }
 
+    /// Enables or disables server push promises.
+    ///
+    /// This value is included in the initial SETTINGS handshake.
+    /// Setting this value to value to
+    /// false in the initial SETTINGS handshake guarantees that the remote server
+    /// will never send a push promise.
+    ///
+    /// This setting can be changed during the life of a single HTTP/2
+    /// connection by sending another settings frame updating the value.
+    ///
+    /// Default value of crate `h2`: `true`.
+    pub fn enable_push(&mut self, enabled: bool) -> &mut Self {
+        self.h2_builder.enable_push = enabled;
+        self
+    }
+
+    /// Sets the `Headers` frame pseudo order.
+    ///
+    /// The pseudo header order setting controls the order of pseudo headers in the
+    /// serialized HTTP/2 headers. The default value is `None`, which means that
+    /// we let the `miku-h2` crate decide the order.
+    pub fn headers_frame_pseudo_order(
+        &mut self,
+        order: impl Into<Option<&'static [crate::ext::PseudoType; 4]>>,
+    ) -> &mut Self {
+        self.h2_builder.headers_frame_pseudo_order = order.into();
+        self
+    }
+
+    /// Sets the `Headers` frame priority.
+    pub fn headers_frame_priority(
+        &mut self,
+        priority: impl Into<Option<crate::ext::FrameStreamDependency>>,
+    ) -> &mut Self {
+        self.h2_builder.headers_frame_priority = priority.into();
+        self
+    }
+
+    /// Sets the `Priority` frames (settings) for virtual streams.
+    pub fn virtual_streams_priorities(
+        &mut self,
+        priorities: impl Into<Option<&'static [crate::ext::FramePriority]>>,
+    ) -> &mut Self {
+        self.h2_builder.virtual_streams_priorities = priorities.into();
+        self
+    }
+
     /// Constructs a connection with the configured options and IO.
     /// See [`client::conn`](crate::client::conn) for more.
     ///

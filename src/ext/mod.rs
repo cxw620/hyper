@@ -77,6 +77,12 @@ impl fmt::Debug for Protocol {
     }
 }
 
+#[cfg(feature = "http2")]
+pub use h2::{
+    ext::PseudoType,
+    frame::{Priority as FramePriority, StreamDependency as FrameStreamDependency},
+};
+
 /// A map from header names to their original casing as received in an HTTP message.
 ///
 /// If an HTTP/1 response `res` is parsed on a connection whose option
