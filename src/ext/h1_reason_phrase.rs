@@ -12,9 +12,9 @@ use bytes::Bytes;
 ///
 /// ```no_run
 /// # #[cfg(all(feature = "tcp", feature = "client", feature = "http1"))]
-/// # async fn fake_fetch() -> hyper::Result<()> {
-/// use hyper::{Client, Uri};
-/// use hyper::ext::ReasonPhrase;
+/// # async fn fake_fetch() -> miku_hyper::Result<()> {
+/// use miku_hyper::{Client, Uri};
+/// use miku_hyper::ext::ReasonPhrase;
 ///
 /// let res = Client::new().get(Uri::from_static("http://example.com/non_canonical_reason")).await?;
 ///

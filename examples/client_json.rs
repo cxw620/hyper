@@ -3,7 +3,7 @@
 
 use bytes::Bytes;
 use http_body_util::{BodyExt, Empty};
-use hyper::{body::Buf, Request};
+use miku_hyper::{body::Buf, Request};
 use serde::Deserialize;
 use tokio::net::TcpStream;
 
@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn fetch_json(url: hyper::Uri) -> Result<Vec<User>> {
+async fn fetch_json(url: miku_hyper::Uri) -> Result<Vec<User>> {
     let host = url.host().expect("uri has no host");
     let port = url.port_u16().unwrap_or(80);
     let addr = format!("{}:{}", host, port);
@@ -35,7 +35,7 @@ async fn fetch_json(url: hyper::Uri) -> Result<Vec<User>> {
     let stream = TcpStream::connect(addr).await?;
     let io = TokioIo::new(stream);
 
-    let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await?;
+    let (mut sender, conn) = miku_hyper::client::conn::http1::handshake(io).await?;
     tokio::task::spawn(async move {
         if let Err(err) = conn.await {
             println!("Connection failed: {:?}", err);
@@ -47,7 +47,7 @@ async fn fetch_json(url: hyper::Uri) -> Result<Vec<User>> {
     // Fetch the url...
     let req = Request::builder()
         .uri(url)
-        .header(hyper::header::HOST, authority.as_str())
+        .header(miku_hyper::header::HOST, authority.as_str())
         .body(Empty::<Bytes>::new())?;
 
     let res = sender.send_request(req).await?;

@@ -4,10 +4,10 @@ use std::net::SocketAddr;
 
 use bytes::Bytes;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
-use hyper::body::Frame;
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::{body::Body, Method, Request, Response, StatusCode};
+use miku_hyper::body::Frame;
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::{body::Body, Method, Request, Response, StatusCode};
 use tokio::net::TcpListener;
 
 #[path = "../benches/support/mod.rs"]
@@ -17,8 +17,8 @@ use support::TokioIo;
 /// This is our service handler. It receives a Request, routes on its
 /// path, and returns a Future of a Response.
 async fn echo(
-    req: Request<hyper::body::Incoming>,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+    req: Request<miku_hyper::body::Incoming>,
+) -> Result<Response<BoxBody<Bytes, miku_hyper::Error>>, miku_hyper::Error> {
     match (req.method(), req.uri().path()) {
         // Serve some instructions at /
         (&Method::GET, "/") => Ok(Response::new(full(
@@ -57,7 +57,7 @@ async fn echo(
             let max = req.body().size_hint().upper().unwrap_or(u64::MAX);
             if max > 1024 * 64 {
                 let mut resp = Response::new(full("Body too big"));
-                *resp.status_mut() = hyper::StatusCode::PAYLOAD_TOO_LARGE;
+                *resp.status_mut() = miku_hyper::StatusCode::PAYLOAD_TOO_LARGE;
                 return Ok(resp);
             }
 
@@ -76,13 +76,13 @@ async fn echo(
     }
 }
 
-fn empty() -> BoxBody<Bytes, hyper::Error> {
+fn empty() -> BoxBody<Bytes, miku_hyper::Error> {
     Empty::<Bytes>::new()
         .map_err(|never| match never {})
         .boxed()
 }
 
-fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
+fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, miku_hyper::Error> {
     Full::new(chunk.into())
         .map_err(|never| match never {})
         .boxed()

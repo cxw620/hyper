@@ -8,8 +8,8 @@ use std::sync::{
 
 use bytes::Bytes;
 use http_body_util::Full;
-use hyper::{server::conn::http1, service::service_fn};
-use hyper::{Error, Response};
+use miku_hyper::{server::conn::http1, service::service_fn};
+use miku_hyper::{Error, Response};
 use tokio::net::TcpListener;
 
 #[path = "../benches/support/mod.rs"]

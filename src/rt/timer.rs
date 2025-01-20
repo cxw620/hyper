@@ -10,7 +10,7 @@
 //! };
 //!
 //! use pin_project_lite::pin_project;
-//! use hyper::rt::{Timer, Sleep};
+//! use miku_hyper::rt::{Timer, Sleep};
 //!
 //! #[derive(Clone, Debug)]
 //! pub struct TokioTimer;

@@ -3,12 +3,12 @@
 
 extern crate test;
 
-// TODO: Reimplement http_connector bench using hyper::client::conn
+// TODO: Reimplement http_connector bench using miku_hyper::client::conn
 // (instead of removed HttpConnector).
 
 // use http::Uri;
-// use hyper::client::connect::HttpConnector;
-// use hyper::service::Service;
+// use miku_hyper::client::connect::HttpConnector;
+// use miku_hyper::service::Service;
 // use std::net::SocketAddr;
 // use tokio::net::TcpListener;
 

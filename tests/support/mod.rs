@@ -8,16 +8,16 @@ use std::sync::{
 
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
-use hyper::server;
+use miku_hyper::server;
 use tokio::net::{TcpListener, TcpStream};
 
-use hyper::service::service_fn;
-use hyper::{body::Incoming as IncomingBody, Request, Response, Version};
+use miku_hyper::service::service_fn;
+use miku_hyper::{body::Incoming as IncomingBody, Request, Response, Version};
 
 pub use futures_util::{
     future, FutureExt as _, StreamExt as _, TryFutureExt as _, TryStreamExt as _,
 };
-pub use hyper::HeaderMap;
+pub use miku_hyper::HeaderMap;
 pub use std::net::SocketAddr;
 
 mod tokiort;
@@ -187,7 +187,7 @@ macro_rules! __internal_eq_prop {
     (headers: $map:tt) => {{
         #[allow(unused_mut)]
         {
-            let mut headers = Vec::<std::sync::Arc<dyn Fn(&hyper::HeaderMap) + Send + Sync>>::new();
+            let mut headers = Vec::<std::sync::Arc<dyn Fn(&miku_hyper::HeaderMap) + Send + Sync>>::new();
             __internal_headers_eq!(headers, $map);
             headers
         }
@@ -202,7 +202,7 @@ macro_rules! __internal_req_res_prop {
         $prop_val
     };
     (status: $prop_val:expr) => {
-        hyper::StatusCode::from_u16($prop_val).expect("status code")
+        miku_hyper::StatusCode::from_u16($prop_val).expect("status code")
     };
     ($prop_name:ident: $prop_val:expr) => {
         From::from($prop_val)
@@ -219,12 +219,12 @@ macro_rules! __internal_headers_map {
 
 macro_rules! __internal_headers_eq {
     (@pat $name: expr, $pat:pat) => {
-        std::sync::Arc::new(move |__hdrs: &hyper::HeaderMap| {
+        std::sync::Arc::new(move |__hdrs: &miku_hyper::HeaderMap| {
             match __hdrs.get($name) {
                 $pat => (),
                 other => panic!("headers[{}] was not {}: {:?}", stringify!($name), stringify!($pat), other),
             }
-        }) as std::sync::Arc<dyn Fn(&hyper::HeaderMap) + Send + Sync>
+        }) as std::sync::Arc<dyn Fn(&miku_hyper::HeaderMap) + Send + Sync>
     };
     (@val $name: expr, NONE) => {{
         __internal_headers_eq!(@pat $name, None);
@@ -234,13 +234,13 @@ macro_rules! __internal_headers_eq {
     }};
     (@val $name: expr, $val:expr) => ({
         let __val = Option::from($val);
-        std::sync::Arc::new(move |__hdrs: &hyper::HeaderMap| {
+        std::sync::Arc::new(move |__hdrs: &miku_hyper::HeaderMap| {
             if let Some(ref val) = __val {
                 assert_eq!(__hdrs.get($name).expect(stringify!($name)), val.to_string().as_str(), stringify!($name));
             } else {
                 assert_eq!(__hdrs.get($name), None, stringify!($name));
             }
-        }) as std::sync::Arc<dyn Fn(&hyper::HeaderMap) + Send + Sync>
+        }) as std::sync::Arc<dyn Fn(&miku_hyper::HeaderMap) + Send + Sync>
     });
     ($headers:ident, { $($name:expr => $val:tt,)* }) => {{
         $(
@@ -270,7 +270,7 @@ impl Default for __CReq {
 
 #[derive(Clone, Default)]
 pub struct __CRes {
-    pub status: hyper::StatusCode,
+    pub status: miku_hyper::StatusCode,
     pub body: Vec<u8>,
     pub headers: __HeadersEq,
 }
@@ -296,7 +296,7 @@ impl Default for __SReq {
 
 #[derive(Clone, Debug, Default)]
 pub struct __SRes {
-    pub status: hyper::StatusCode,
+    pub status: miku_hyper::StatusCode,
     pub body: Vec<u8>,
     pub headers: HeaderMap,
 }
@@ -432,7 +432,7 @@ async fn async_test(cfg: __TestConfig) {
             let io = TokioIo::new(stream);
 
             let res = if http2_only {
-                let (mut sender, conn) = hyper::client::conn::http2::Builder::new(TokioExecutor)
+                let (mut sender, conn) = miku_hyper::client::conn::http2::Builder::new(TokioExecutor)
                     .handshake(io)
                     .await
                     .unwrap();
@@ -444,7 +444,7 @@ async fn async_test(cfg: __TestConfig) {
                 });
                 sender.send_request(req).await.unwrap()
             } else {
-                let (mut sender, conn) = hyper::client::conn::http1::Builder::new()
+                let (mut sender, conn) = miku_hyper::client::conn::http1::Builder::new()
                     .handshake(io)
                     .await
                     .unwrap();
@@ -533,7 +533,7 @@ async fn naive_proxy(cfg: ProxyConfig) -> (SocketAddr, impl Future<Output = ()>)
 
                         let resp = if http2_only {
                             let (mut sender, conn) =
-                                hyper::client::conn::http2::Builder::new(TokioExecutor)
+                                miku_hyper::client::conn::http2::Builder::new(TokioExecutor)
                                     .handshake(io)
                                     .await
                                     .unwrap();
@@ -546,7 +546,7 @@ async fn naive_proxy(cfg: ProxyConfig) -> (SocketAddr, impl Future<Output = ()>)
 
                             sender.send_request(req).await?
                         } else {
-                            let builder = hyper::client::conn::http1::Builder::new();
+                            let builder = miku_hyper::client::conn::http1::Builder::new();
                             let (mut sender, conn) = builder.handshake(io).await.unwrap();
 
                             tokio::task::spawn(async move {
@@ -568,7 +568,7 @@ async fn naive_proxy(cfg: ProxyConfig) -> (SocketAddr, impl Future<Output = ()>)
                         let mut builder = Response::builder().status(parts.status);
                         *builder.headers_mut().unwrap() = parts.headers;
 
-                        Result::<Response<hyper::body::Incoming>, hyper::Error>::Ok(
+                        Result::<Response<miku_hyper::body::Incoming>, miku_hyper::Error>::Ok(
                             builder.body(body).unwrap(),
                         )
                     }

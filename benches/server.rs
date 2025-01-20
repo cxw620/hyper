@@ -15,10 +15,10 @@ use futures_util::{stream, StreamExt};
 use http_body_util::{BodyExt, Full, StreamBody};
 use tokio::sync::oneshot;
 
-use hyper::body::Frame;
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::Response;
+use miku_hyper::body::Frame;
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::Response;
 
 macro_rules! bench_server {
     ($b:ident, $header:expr, $body:expr) => {{
@@ -46,7 +46,7 @@ macro_rules! bench_server {
                             .serve_connection(
                                 io,
                                 service_fn(|_| async {
-                                    Ok::<_, hyper::Error>(
+                                    Ok::<_, miku_hyper::Error>(
                                         Response::builder()
                                             .header($header.0, $header.1)
                                             .header("content-type", "text/plain")

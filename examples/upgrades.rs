@@ -10,11 +10,11 @@ use tokio::sync::watch;
 
 use bytes::Bytes;
 use http_body_util::Empty;
-use hyper::header::{HeaderValue, UPGRADE};
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::upgrade::Upgraded;
-use hyper::{Request, Response, StatusCode};
+use miku_hyper::header::{HeaderValue, UPGRADE};
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::upgrade::Upgraded;
+use miku_hyper::{Request, Response, StatusCode};
 
 #[path = "../benches/support/mod.rs"]
 mod support;
@@ -43,7 +43,7 @@ async fn server_upgraded_io(upgraded: Upgraded) -> Result<()> {
 }
 
 /// Our server HTTP handler to initiate HTTP upgrades.
-async fn server_upgrade(mut req: Request<hyper::body::Incoming>) -> Result<Response<Empty<Bytes>>> {
+async fn server_upgrade(mut req: Request<miku_hyper::body::Incoming>) -> Result<Response<Empty<Bytes>>> {
     let mut res = Response::new(Empty::new());
 
     // Send a 400 to any request that doesn't have
@@ -61,7 +61,7 @@ async fn server_upgrade(mut req: Request<hyper::body::Incoming>) -> Result<Respo
     // is returned below, so it's better to spawn this future instead
     // waiting for it to complete to then return a response.
     tokio::task::spawn(async move {
-        match hyper::upgrade::on(&mut req).await {
+        match miku_hyper::upgrade::on(&mut req).await {
             Ok(upgraded) => {
                 if let Err(e) = server_upgraded_io(upgraded).await {
                     eprintln!("server foobar io error: {}", e)
@@ -104,7 +104,7 @@ async fn client_upgrade_request(addr: SocketAddr) -> Result<()> {
 
     let stream = TcpStream::connect(addr).await?;
     let io = TokioIo::new(stream);
-    let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await?;
+    let (mut sender, conn) = miku_hyper::client::conn::http1::handshake(io).await?;
 
     tokio::task::spawn(async move {
         // Don't forget to enable upgrades on the connection.
@@ -119,7 +119,7 @@ async fn client_upgrade_request(addr: SocketAddr) -> Result<()> {
         panic!("Our server didn't upgrade: {}", res.status());
     }
 
-    match hyper::upgrade::on(res).await {
+    match miku_hyper::upgrade::on(res).await {
         Ok(upgraded) => {
             if let Err(e) = client_upgraded_io(upgraded).await {
                 eprintln!("client foobar io error: {}", e)

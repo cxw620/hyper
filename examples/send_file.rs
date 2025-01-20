@@ -5,10 +5,10 @@ use std::net::SocketAddr;
 use bytes::Bytes;
 use futures_util::TryStreamExt;
 use http_body_util::{combinators::BoxBody, BodyExt, Full, StreamBody};
-use hyper::body::Frame;
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::{Method, Request, Response, Result, StatusCode};
+use miku_hyper::body::Frame;
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::{Method, Request, Response, Result, StatusCode};
 use tokio::{fs::File, net::TcpListener};
 use tokio_util::io::ReaderStream;
 
@@ -44,7 +44,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn response_examples(
-    req: Request<hyper::body::Incoming>,
+    req: Request<miku_hyper::body::Incoming>,
 ) -> Result<Response<BoxBody<Bytes, std::io::Error>>> {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") | (&Method::GET, "/index.html") => simple_file_send(INDEX).await,

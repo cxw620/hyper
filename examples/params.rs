@@ -3,9 +3,9 @@
 
 use bytes::Bytes;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::{Method, Request, Response, StatusCode};
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::{Method, Request, Response, StatusCode};
 use tokio::net::TcpListener;
 
 use std::collections::HashMap;
@@ -22,8 +22,8 @@ static NOTNUMERIC: &[u8] = b"Number field is not numeric";
 
 // Using service_fn, we can turn this function into a `Service`.
 async fn param_example(
-    req: Request<hyper::body::Incoming>,
-) -> Result<Response<BoxBody<Bytes, Infallible>>, hyper::Error> {
+    req: Request<miku_hyper::body::Incoming>,
+) -> Result<Response<BoxBody<Bytes, Infallible>>, miku_hyper::Error> {
     match (req.method(), req.uri().path()) {
         (&Method::GET, "/") | (&Method::GET, "/post") => Ok(Response::new(full(INDEX))),
         (&Method::POST, "/post") => {

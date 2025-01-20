@@ -53,7 +53,7 @@ pin_project_lite::pin_project! {
 ///
 /// ```
 /// # use std::time::Duration;
-/// # use hyper::server::conn::http1::Builder;
+/// # use miku_hyper::server::conn::http1::Builder;
 /// # fn main() {
 /// let mut http = Builder::new();
 /// // Set options one at a time
@@ -397,14 +397,14 @@ impl Builder {
     /// # Example
     ///
     /// ```
-    /// # use hyper::{body::Incoming, Request, Response};
-    /// # use hyper::service::Service;
-    /// # use hyper::server::conn::http1::Builder;
-    /// # use hyper::rt::{Read, Write};
+    /// # use miku_hyper::{body::Incoming, Request, Response};
+    /// # use miku_hyper::service::Service;
+    /// # use miku_hyper::server::conn::http1::Builder;
+    /// # use miku_hyper::rt::{Read, Write};
     /// # async fn run<I, S>(some_io: I, some_service: S)
     /// # where
     /// #     I: Read + Write + Unpin + Send + 'static,
-    /// #     S: Service<hyper::Request<Incoming>, Response=hyper::Response<Incoming>> + Send + 'static,
+    /// #     S: Service<miku_hyper::Request<Incoming>, Response = miku_hyper::Response<Incoming>> + Send + 'static,
     /// #     S::Error: Into<Box<dyn std::error::Error + Send + Sync>>,
     /// #     S::Future: Send,
     /// # {

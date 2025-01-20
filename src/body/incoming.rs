@@ -43,8 +43,8 @@ type TrailersSender = oneshot::Sender<HeaderMap>;
 ///
 /// ```rust,ignore
 /// async fn echo(
-///    req: Request<hyper::body::Incoming>,
-/// ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+///    req: Request<miku_hyper::body::Incoming>,
+/// ) -> Result<Response<BoxBody<Bytes, miku_hyper::Error>>, miku_hyper::Error> {
 ///    //Here, you can process `Incoming`
 /// }
 /// ```

@@ -12,7 +12,7 @@ use std::net::SocketAddr;
 use futures_util::future::join_all;
 
 use http_body_util::BodyExt;
-use hyper::{Method, Request, Response};
+use miku_hyper::{Method, Request, Response};
 
 type BoxedBody = http_body_util::combinators::BoxBody<bytes::Bytes, Infallible>;
 
@@ -305,15 +305,15 @@ impl Opts {
         let addr = spawn_server(&rt, &self);
 
         enum Client {
-            Http1(hyper::client::conn::http1::SendRequest<BoxedBody>),
-            Http2(hyper::client::conn::http2::SendRequest<BoxedBody>),
+            Http1(miku_hyper::client::conn::http1::SendRequest<BoxedBody>),
+            Http2(miku_hyper::client::conn::http2::SendRequest<BoxedBody>),
         }
 
         let mut client = rt.block_on(async {
             if self.http2 {
                 let tcp = tokio::net::TcpStream::connect(&addr).await.unwrap();
                 let io = support::TokioIo::new(tcp);
-                let (tx, conn) = hyper::client::conn::http2::Builder::new(support::TokioExecutor)
+                let (tx, conn) = miku_hyper::client::conn::http2::Builder::new(support::TokioExecutor)
                     .initial_stream_window_size(self.http2_stream_window)
                     .initial_connection_window_size(self.http2_conn_window)
                     .adaptive_window(self.http2_adaptive_window)
@@ -327,7 +327,7 @@ impl Opts {
             } else {
                 let tcp = tokio::net::TcpStream::connect(&addr).await.unwrap();
                 let io = support::TokioIo::new(tcp);
-                let (tx, conn) = hyper::client::conn::http1::Builder::new()
+                let (tx, conn) = miku_hyper::client::conn::http1::Builder::new()
                     .handshake(io)
                     .await
                     .unwrap();
@@ -336,7 +336,7 @@ impl Opts {
             }
         });
 
-        let url: hyper::Uri = format!("http://{}/hello", addr).parse().unwrap();
+        let url: miku_hyper::Uri = format!("http://{}/hello", addr).parse().unwrap();
 
         let make_request = || {
             let chunk_cnt = self.request_chunks;
@@ -348,7 +348,7 @@ impl Opts {
                     .expect("request_chunks means request_body");
                 exec.spawn(async move {
                     use futures_util::SinkExt;
-                    use hyper::body::Frame;
+                    use miku_hyper::body::Frame;
                     for _ in 0..chunk_cnt {
                         tx.send(Ok(Frame::data(bytes::Bytes::from(chunk))))
                             .await
@@ -403,7 +403,7 @@ impl Opts {
 
 fn spawn_server(rt: &tokio::runtime::Runtime, opts: &Opts) -> SocketAddr {
     use http_body_util::Full;
-    use hyper::service::service_fn;
+    use miku_hyper::service::service_fn;
     use tokio::net::TcpListener;
     let addr = "127.0.0.1:0".parse::<std::net::SocketAddr>().unwrap();
 
@@ -418,13 +418,13 @@ fn spawn_server(rt: &tokio::runtime::Runtime, opts: &Opts) -> SocketAddr {
             let io = support::TokioIo::new(sock);
             if opts.http2 {
                 tokio::spawn(
-                    hyper::server::conn::http2::Builder::new(support::TokioExecutor)
+                    miku_hyper::server::conn::http2::Builder::new(support::TokioExecutor)
                         .initial_stream_window_size(opts.http2_stream_window)
                         .initial_connection_window_size(opts.http2_conn_window)
                         .adaptive_window(opts.http2_adaptive_window)
                         .serve_connection(
                             io,
-                            service_fn(move |req: Request<hyper::body::Incoming>| async move {
+                            service_fn(move |req: Request<miku_hyper::body::Incoming>| async move {
                                 let mut req_body = req.into_body();
                                 while let Some(_chunk) = req_body.frame().await {}
                                 Ok::<_, std::convert::Infallible>(Response::new(
@@ -434,9 +434,9 @@ fn spawn_server(rt: &tokio::runtime::Runtime, opts: &Opts) -> SocketAddr {
                         ),
                 );
             } else {
-                tokio::spawn(hyper::server::conn::http1::Builder::new().serve_connection(
+                tokio::spawn(miku_hyper::server::conn::http1::Builder::new().serve_connection(
                     io,
-                    service_fn(move |req: Request<hyper::body::Incoming>| async move {
+                    service_fn(move |req: Request<miku_hyper::body::Incoming>| async move {
                         let mut req_body = req.into_body();
                         while let Some(_chunk) = req_body.frame().await {}
                         Ok::<_, std::convert::Infallible>(Response::new(

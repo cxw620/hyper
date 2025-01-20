@@ -2,11 +2,11 @@
 #![allow(unused_imports)]
 
 use http_body_util::Full;
-use hyper::body::Bytes;
+use miku_hyper::body::Bytes;
 #[cfg(feature = "server")]
-use hyper::server::conn::http2;
-use hyper::service::service_fn;
-use hyper::{Request, Response};
+use miku_hyper::server::conn::http2;
+use miku_hyper::service::service_fn;
+use miku_hyper::{Request, Response};
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use tokio::net::TcpListener;
@@ -20,7 +20,7 @@ use support::TokioIo;
 // An async function that consumes a request, does nothing with it and returns a
 // response.
 #[cfg(feature = "server")]
-async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
+async fn hello(_: Request<miku_hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
     Ok(Response::new(Full::new(Bytes::from("Hello, World!"))))
 }
 
@@ -32,7 +32,7 @@ pub struct TokioExecutor;
 // tasks in the hyper runtime.
 // An Executor allows us to manage execution of tasks which can help us improve the efficiency and
 // scalability of the server.
-impl<F> hyper::rt::Executor<F> for TokioExecutor
+impl<F> miku_hyper::rt::Executor<F> for TokioExecutor
 where
     F: std::future::Future + Send + 'static,
     F::Output: Send + 'static,

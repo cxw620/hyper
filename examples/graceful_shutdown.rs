@@ -6,9 +6,9 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use http_body_util::Full;
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::{Request, Response};
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::{Request, Response};
 use tokio::net::TcpListener;
 use tokio::pin;
 
@@ -18,7 +18,7 @@ use support::TokioIo;
 
 // An async function that consumes a request, does nothing with it and returns a
 // response.
-async fn hello(_: Request<hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
+async fn hello(_: Request<miku_hyper::body::Incoming>) -> Result<Response<Full<Bytes>>, Infallible> {
     // Sleep for 6 seconds to simulate long processing.
     // This is longer than the initial 5 second connection timeout,
     // but within the 2 second graceful shutdown timeout.

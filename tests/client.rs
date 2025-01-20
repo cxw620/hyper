@@ -12,9 +12,9 @@ use std::time::Duration;
 
 use http::uri::PathAndQuery;
 use http_body_util::{BodyExt, StreamBody};
-use hyper::body::Frame;
-use hyper::header::{HeaderMap, HeaderName, HeaderValue};
-use hyper::{Method, Request, StatusCode, Uri, Version};
+use miku_hyper::body::Frame;
+use miku_hyper::header::{HeaderMap, HeaderName, HeaderValue};
+use miku_hyper::{Method, Request, StatusCode, Uri, Version};
 
 use bytes::Bytes;
 use futures_channel::oneshot;
@@ -29,14 +29,14 @@ fn s(buf: &[u8]) -> &str {
 
 async fn concat<B>(b: B) -> Result<Bytes, B::Error>
 where
-    B: hyper::body::Body,
+    B: miku_hyper::body::Body,
 {
     b.collect().await.map(|c| c.to_bytes())
 }
 
 async fn concat_with_trailers<B>(b: B) -> Result<(Bytes, Option<HeaderMap>), B::Error>
 where
-    B: hyper::body::Body,
+    B: miku_hyper::body::Body,
 {
     let collect = b.collect().await?;
     let trailers = collect.trailers().cloned();
@@ -57,7 +57,7 @@ struct HttpInfo {
 #[derive(Debug)]
 enum Error {
     Io(std::io::Error),
-    Hyper(hyper::Error),
+    Hyper(miku_hyper::Error),
     AbsoluteUriRequired,
     UnsupportedVersion,
 }
@@ -109,8 +109,8 @@ impl From<std::io::Error> for Error {
     }
 }
 
-impl From<hyper::Error> for Error {
-    fn from(err: hyper::Error) -> Self {
+impl From<miku_hyper::Error> for Error {
+    fn from(err: miku_hyper::Error) -> Self {
         Self::Hyper(err)
     }
 }
@@ -260,10 +260,10 @@ macro_rules! test {
             .expect("request builder");
 
         let res = async move {
-            // Wrapper around hyper::client::conn::Builder with set_host field to mimic
-            // hyper::client::Builder.
+            // Wrapper around miku_hyper::client::conn::Builder with set_host field to mimic
+            // miku_hyper::client::Builder.
             struct Builder {
-                inner: hyper::client::conn::http1::Builder,
+                inner: miku_hyper::client::conn::http1::Builder,
                 set_host: bool,
                 http09_responses: bool,
             }
@@ -271,7 +271,7 @@ macro_rules! test {
             impl Builder {
                 fn new() -> Self {
                     Self {
-                        inner: hyper::client::conn::http1::Builder::new(),
+                        inner: miku_hyper::client::conn::http1::Builder::new(),
                         set_host: true,
                         http09_responses: false,
                     }
@@ -292,7 +292,7 @@ macro_rules! test {
             }
 
             impl std::ops::Deref for Builder {
-                type Target = hyper::client::conn::http1::Builder;
+                type Target = miku_hyper::client::conn::http1::Builder;
 
                 fn deref(&self) -> &Self::Target {
                     &self.inner
@@ -417,7 +417,7 @@ macro_rules! __client_req_prop {
     }};
 
     ($req_builder:ident, $body:ident, $addr:ident, version: $version:ident) => {{
-        $req_builder = $req_builder.version(hyper::Version::$version);
+        $req_builder = $req_builder.version(miku_hyper::Version::$version);
     }};
 
     ($req_builder:ident, $body:ident, $addr:ident, url: $url:expr) => {{
@@ -1497,14 +1497,14 @@ mod conn {
     use futures_channel::{mpsc, oneshot};
     use futures_util::future::{self, poll_fn, FutureExt, TryFutureExt};
     use http_body_util::{BodyExt, Empty, Full, StreamBody};
-    use hyper::rt::Timer;
+    use miku_hyper::rt::Timer;
     use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
     use tokio::net::{TcpListener as TkTcpListener, TcpStream};
 
-    use hyper::body::{Body, Frame};
-    use hyper::client::conn;
-    use hyper::upgrade::OnUpgrade;
-    use hyper::{Method, Request, Response, StatusCode};
+    use miku_hyper::body::{Body, Frame};
+    use miku_hyper::client::conn;
+    use miku_hyper::upgrade::OnUpgrade;
+    use miku_hyper::{Method, Request, Response, StatusCode};
 
     use super::{concat, s, support, tcp_connect, FutureHyperExt};
 
@@ -1563,7 +1563,7 @@ mod conn {
                 .body(Empty::<Bytes>::new())
                 .unwrap();
             let mut res = client.send_request(req).await.expect("send_request");
-            assert_eq!(res.status(), hyper::StatusCode::OK);
+            assert_eq!(res.status(), miku_hyper::StatusCode::OK);
             assert!(res.body_mut().frame().await.is_none());
         };
 
@@ -1603,10 +1603,10 @@ mod conn {
                 .body(Empty::<Bytes>::new())
                 .unwrap();
             let mut res = client.send_request(req).await.expect("send_request");
-            assert_eq!(res.status(), hyper::StatusCode::OK);
+            assert_eq!(res.status(), miku_hyper::StatusCode::OK);
             assert_eq!(
                 res.extensions()
-                    .get::<hyper::ext::ReasonPhrase>()
+                    .get::<miku_hyper::ext::ReasonPhrase>()
                     .expect("custom reason phrase is present")
                     .as_bytes(),
                 &b"Alright"[..]
@@ -1656,7 +1656,7 @@ mod conn {
             .body(Empty::<Bytes>::new())
             .unwrap();
         let res = client.send_request(req).and_then(move |mut res| {
-            assert_eq!(res.status(), hyper::StatusCode::OK);
+            assert_eq!(res.status(), miku_hyper::StatusCode::OK);
             assert_eq!(res.body().size_hint().exact(), Some(5));
             assert!(!res.body().is_end_stream());
             poll_fn(move |ctx| Pin::new(res.body_mut()).poll_frame(ctx)).map(Option::unwrap)
@@ -1761,7 +1761,7 @@ mod conn {
             .unwrap();
 
         let res = client.send_request(req).and_then(move |res| {
-            assert_eq!(res.status(), hyper::StatusCode::OK);
+            assert_eq!(res.status(), miku_hyper::StatusCode::OK);
             concat(res)
         });
         let rx = rx1.expect("thread panicked");
@@ -1801,12 +1801,12 @@ mod conn {
 
         let req = Request::builder()
             .uri("/a")
-            .version(hyper::Version::HTTP_2)
+            .version(miku_hyper::Version::HTTP_2)
             .body(Empty::<Bytes>::new())
             .unwrap();
 
         let res = client.send_request(req).and_then(move |res| {
-            assert_eq!(res.status(), hyper::StatusCode::OK);
+            assert_eq!(res.status(), miku_hyper::StatusCode::OK);
             concat(res)
         });
         let rx = rx1.expect("thread panicked");
@@ -1845,7 +1845,7 @@ mod conn {
             .body(Empty::<Bytes>::new())
             .unwrap();
         let res1 = client.send_request(req).and_then(move |res| {
-            assert_eq!(res.status(), hyper::StatusCode::OK);
+            assert_eq!(res.status(), miku_hyper::StatusCode::OK);
             concat(res)
         });
 
@@ -1913,7 +1913,7 @@ mod conn {
                 .body(Empty::<Bytes>::new())
                 .unwrap();
             let res = client.send_request(req).and_then(move |res| {
-                assert_eq!(res.status(), hyper::StatusCode::SWITCHING_PROTOCOLS);
+                assert_eq!(res.status(), miku_hyper::StatusCode::SWITCHING_PROTOCOLS);
                 assert_eq!(res.headers()["Upgrade"], "foobar");
                 concat(res)
             });
@@ -2000,7 +2000,7 @@ mod conn {
             let res = client
                 .send_request(req)
                 .and_then(move |res| {
-                    assert_eq!(res.status(), hyper::StatusCode::OK);
+                    assert_eq!(res.status(), miku_hyper::StatusCode::OK);
                     concat(res)
                 })
                 .map_ok(|body| {
@@ -2189,8 +2189,8 @@ mod conn {
 
         let (shdn_tx, mut shdn_rx) = tokio::sync::watch::channel(false);
         tokio::task::spawn(async move {
-            use hyper::server::conn::http2;
-            use hyper::service::service_fn;
+            use miku_hyper::server::conn::http2;
+            use miku_hyper::service::service_fn;
 
             loop {
                 tokio::select! {
@@ -2198,7 +2198,7 @@ mod conn {
                         let (stream, _) = res.unwrap();
                         let stream = TokioIo::new(stream);
 
-                        let service = service_fn(|_:Request<hyper::body::Incoming>| future::ok::<_, hyper::Error>(Response::new(Empty::<Bytes>::new())));
+                        let service = service_fn(|_:Request<miku_hyper::body::Incoming>| future::ok::<_, miku_hyper::Error>(Response::new(Empty::<Bytes>::new())));
 
                         let mut shdn_rx = shdn_rx.clone();
                         tokio::task::spawn(async move {
@@ -2271,20 +2271,20 @@ mod conn {
         let (tx, rxx) = oneshot::channel::<()>();
 
         tokio::task::spawn(async move {
-            use hyper::server::conn::http2;
-            use hyper::service::service_fn;
+            use miku_hyper::server::conn::http2;
+            use miku_hyper::service::service_fn;
 
             let res = listener.accept().await;
             let (stream, _) = res.unwrap();
             let stream = TokioIo::new(stream);
 
-            let service = service_fn(move |req: Request<hyper::body::Incoming>| {
+            let service = service_fn(move |req: Request<miku_hyper::body::Incoming>| {
                 tokio::task::spawn(async move {
-                    let io = &mut TokioIo::new(hyper::upgrade::on(req).await.unwrap());
+                    let io = &mut TokioIo::new(miku_hyper::upgrade::on(req).await.unwrap());
                     io.write_all(b"hello\n").await.unwrap();
                 });
 
-                future::ok::<_, hyper::Error>(Response::new(Empty::<Bytes>::new()))
+                future::ok::<_, miku_hyper::Error>(Response::new(Empty::<Bytes>::new()))
             });
 
             tokio::task::spawn(async move {
@@ -2324,7 +2324,7 @@ mod conn {
 
             let resp = client.send_request(req).await.expect("req1 send");
             assert_eq!(resp.status(), 200);
-            let upgrade = hyper::upgrade::on(resp).await.unwrap();
+            let upgrade = miku_hyper::upgrade::on(resp).await.unwrap();
             tokio::task::spawn(async move {
                 let _ = rx.await;
                 drop(upgrade);
@@ -2362,7 +2362,7 @@ mod conn {
             .keep_alive_timeout(Duration::from_secs(1))
             // enable while idle since we aren't sending requests
             .keep_alive_while_idle(true)
-            .handshake::<_, hyper::body::Incoming>(io)
+            .handshake::<_, miku_hyper::body::Incoming>(io)
             .await
             .expect("http handshake");
 
@@ -2388,7 +2388,7 @@ mod conn {
             .timer(TokioTimer)
             .keep_alive_interval(Duration::from_secs(1))
             .keep_alive_timeout(Duration::from_secs(1))
-            .handshake::<_, hyper::body::Incoming>(io)
+            .handshake::<_, miku_hyper::body::Incoming>(io)
             .await
             .expect("http handshake");
 
@@ -2449,14 +2449,14 @@ mod conn {
     async fn http2_keep_alive_with_responsive_server() {
         // Test that a responsive server works just when client keep
         // alive is enabled
-        use hyper::service::service_fn;
+        use miku_hyper::service::service_fn;
 
         let (listener, addr) = setup_tk_test_server().await;
 
         // Spawn an HTTP2 server that reads the whole body and responds
         tokio::spawn(async move {
             let sock = TokioIo::new(listener.accept().await.unwrap().0);
-            hyper::server::conn::http2::Builder::new(TokioExecutor)
+            miku_hyper::server::conn::http2::Builder::new(TokioExecutor)
                 .timer(TokioTimer)
                 .serve_connection(
                     sock,
@@ -2466,7 +2466,7 @@ mod conn {
                                 .await
                                 .expect("server req body aggregate");
                         });
-                        Ok::<_, hyper::Error>(http::Response::new(Empty::<Bytes>::new()))
+                        Ok::<_, miku_hyper::Error>(http::Response::new(Empty::<Bytes>::new()))
                     }),
                 )
                 .await
@@ -2504,7 +2504,7 @@ mod conn {
     async fn http2_responds_before_consuming_request_body() {
         // Test that a early-response from server works correctly (request body wasn't fully consumed).
         // https://github.com/hyperium/hyper/issues/2872
-        use hyper::service::service_fn;
+        use miku_hyper::service::service_fn;
 
         let _ = pretty_env_logger::try_init();
 
@@ -2514,12 +2514,12 @@ mod conn {
         // It's normal case to decline the request due to headers or size of the body.
         tokio::spawn(async move {
             let sock = TokioIo::new(listener.accept().await.unwrap().0);
-            hyper::server::conn::http2::Builder::new(TokioExecutor)
+            miku_hyper::server::conn::http2::Builder::new(TokioExecutor)
                 .timer(TokioTimer)
                 .serve_connection(
                     sock,
                     service_fn(|_req| async move {
-                        Ok::<_, hyper::Error>(Response::new(Full::new(Bytes::from(
+                        Ok::<_, miku_hyper::Error>(Response::new(Full::new(Bytes::from(
                             "No bread for you!",
                         ))))
                     }),
@@ -2600,7 +2600,7 @@ mod conn {
         let res = client.send_request(req).await.expect("send_request");
         assert_eq!(res.status(), StatusCode::OK);
 
-        let mut upgraded = TokioIo::new(hyper::upgrade::on(res).await.unwrap());
+        let mut upgraded = TokioIo::new(miku_hyper::upgrade::on(res).await.unwrap());
 
         let mut vec = vec![];
         upgraded.read_to_end(&mut vec).await.unwrap();
@@ -2710,7 +2710,7 @@ mod conn {
         shutdown_called: bool,
     }
 
-    impl hyper::rt::Write for DebugStream {
+    impl miku_hyper::rt::Write for DebugStream {
         fn poll_shutdown(
             mut self: Pin<&mut Self>,
             cx: &mut Context<'_>,
@@ -2735,11 +2735,11 @@ mod conn {
         }
     }
 
-    impl hyper::rt::Read for DebugStream {
+    impl miku_hyper::rt::Read for DebugStream {
         fn poll_read(
             mut self: Pin<&mut Self>,
             cx: &mut Context<'_>,
-            buf: hyper::rt::ReadBufCursor<'_>,
+            buf: miku_hyper::rt::ReadBufCursor<'_>,
         ) -> Poll<io::Result<()>> {
             Pin::new(&mut self.tcp).poll_read(cx, buf)
         }

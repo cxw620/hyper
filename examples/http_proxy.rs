@@ -4,11 +4,11 @@ use std::net::SocketAddr;
 
 use bytes::Bytes;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
-use hyper::client::conn::http1::Builder;
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::upgrade::Upgraded;
-use hyper::{Method, Request, Response};
+use miku_hyper::client::conn::http1::Builder;
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::upgrade::Upgraded;
+use miku_hyper::{Method, Request, Response};
 
 use tokio::net::{TcpListener, TcpStream};
 
@@ -49,8 +49,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn proxy(
-    req: Request<hyper::body::Incoming>,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+    req: Request<miku_hyper::body::Incoming>,
+) -> Result<Response<BoxBody<Bytes, miku_hyper::Error>>, miku_hyper::Error> {
     println!("req: {:?}", req);
 
     if Method::CONNECT == req.method() {
@@ -69,7 +69,7 @@ async fn proxy(
         // `on_upgrade` future.
         if let Some(addr) = host_addr(req.uri()) {
             tokio::task::spawn(async move {
-                match hyper::upgrade::on(req).await {
+                match miku_hyper::upgrade::on(req).await {
                     Ok(upgraded) => {
                         if let Err(e) = tunnel(upgraded, addr).await {
                             eprintln!("server io error: {}", e);
@@ -114,13 +114,13 @@ fn host_addr(uri: &http::Uri) -> Option<String> {
     uri.authority().map(|auth| auth.to_string())
 }
 
-fn empty() -> BoxBody<Bytes, hyper::Error> {
+fn empty() -> BoxBody<Bytes, miku_hyper::Error> {
     Empty::<Bytes>::new()
         .map_err(|never| match never {})
         .boxed()
 }
 
-fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
+fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, miku_hyper::Error> {
     Full::new(chunk.into())
         .map_err(|never| match never {})
         .boxed()

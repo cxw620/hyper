@@ -4,9 +4,9 @@ use std::net::SocketAddr;
 
 use bytes::{Buf, Bytes};
 use http_body_util::{BodyExt, Full};
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::{body::Incoming as IncomingBody, header, Method, Request, Response, StatusCode};
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::{body::Incoming as IncomingBody, header, Method, Request, Response, StatusCode};
 use tokio::net::{TcpListener, TcpStream};
 
 #[path = "../benches/support/mod.rs"]
@@ -15,7 +15,7 @@ use support::TokioIo;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
 type Result<T> = std::result::Result<T, GenericError>;
-type BoxBody = http_body_util::combinators::BoxBody<Bytes, hyper::Error>;
+type BoxBody = http_body_util::combinators::BoxBody<Bytes, miku_hyper::Error>;
 
 static INDEX: &[u8] = b"<a href=\"test.html\">test.html</a>";
 static INTERNAL_SERVER_ERROR: &[u8] = b"Internal Server Error";
@@ -36,7 +36,7 @@ async fn client_request_response() -> Result<Response<BoxBody>> {
     let stream = TcpStream::connect(format!("{}:{}", host, port)).await?;
     let io = TokioIo::new(stream);
 
-    let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await?;
+    let (mut sender, conn) = miku_hyper::client::conn::http1::handshake(io).await?;
 
     tokio::task::spawn(async move {
         if let Err(err) = conn.await {

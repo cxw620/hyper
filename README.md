@@ -1,7 +1,7 @@
-# [hyper](https://hyper.rs)
+# Miku-Hyper
 
-[![crates.io](https://img.shields.io/crates/v/hyper.svg)](https://crates.io/crates/hyper)
-[![Released API docs](https://docs.rs/hyper/badge.svg)](https://docs.rs/hyper)
+[![crates.io](https://img.shields.io/crates/v/miku-hyper.svg)](https://crates.io/crates/hyper)
+[![Released API docs](https://docs.rs/miku-hyper/badge.svg)](https://docs.rs/hyper)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![CI](https://github.com/hyperium/hyper/workflows/CI/badge.svg)](https://github.com/hyperium/hyper/actions?query=workflow%3ACI)
 [![Discord chat][discord-badge]][discord-url]
@@ -39,6 +39,10 @@ If you prefer chatting, there is an active community in the [Discord server][dis
 ## License
 
 hyper is provided under the MIT license. See [LICENSE](LICENSE).
+
+## Statement and thanks
+
+This crate is a fork of [hyper](https://github.com/hyperium/hyper).
 
 [discord-badge]: https://img.shields.io/discord/500028886025895936.svg?logo=discord
 [discord-url]: https://discord.gg/kkwpueZ

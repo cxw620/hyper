@@ -1,8 +1,8 @@
 use bytes::Bytes;
 use http_body_util::Full;
-use hyper::server::conn::http1;
-use hyper::service::Service;
-use hyper::{body::Incoming as IncomingBody, Request, Response};
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::Service;
+use miku_hyper::{body::Incoming as IncomingBody, Request, Response};
 use tokio::net::TcpListener;
 
 use std::future::Future;
@@ -46,11 +46,11 @@ struct Svc {
 
 impl Service<Request<IncomingBody>> for Svc {
     type Response = Response<Full<Bytes>>;
-    type Error = hyper::Error;
+    type Error = miku_hyper::Error;
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
     fn call(&self, req: Request<IncomingBody>) -> Self::Future {
-        fn mk_response(s: String) -> Result<Response<Full<Bytes>>, hyper::Error> {
+        fn mk_response(s: String) -> Result<Response<Full<Bytes>>, miku_hyper::Error> {
             Ok(Response::builder().body(Full::new(Bytes::from(s))).unwrap())
         }
 

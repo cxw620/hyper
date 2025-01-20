@@ -205,8 +205,8 @@ impl OriginalHeaderOrder {
     ///
     /// # Examples
     /// ```no_run
-    /// use hyper::ext::OriginalHeaderOrder;
-    /// use hyper::header::{HeaderName, HeaderValue, HeaderMap};
+    /// use miku_hyper::ext::OriginalHeaderOrder;
+    /// use miku_hyper::header::{HeaderName, HeaderValue, HeaderMap};
     ///
     /// let mut h_order = OriginalHeaderOrder::default();
     /// let mut h_map = Headermap::new();

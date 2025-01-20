@@ -5,9 +5,9 @@ use std::net::SocketAddr;
 
 use bytes::Bytes;
 use http_body_util::Full;
-use hyper::server::conn::http1;
-use hyper::service::service_fn;
-use hyper::{Request, Response};
+use miku_hyper::server::conn::http1;
+use miku_hyper::service::service_fn;
+use miku_hyper::{Request, Response};
 use tokio::net::TcpListener;
 
 // This would normally come from the `hyper-util` crate, but we can't depend
@@ -18,7 +18,7 @@ use support::{TokioIo, TokioTimer};
 
 // An async function that consumes a request, does nothing with it and returns a
 // response.
-async fn hello(_: Request<impl hyper::body::Body>) -> Result<Response<Full<Bytes>>, Infallible> {
+async fn hello(_: Request<impl miku_hyper::body::Body>) -> Result<Response<Full<Bytes>>, Infallible> {
     Ok(Response::new(Full::new(Bytes::from("Hello World!"))))
 }
 

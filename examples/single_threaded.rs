@@ -11,17 +11,17 @@
 ///
 /// For HTTP/2 this only works if the `Executor` trait is implemented without the `Send` bound.
 use http_body_util::BodyExt;
-use hyper::server::conn::http2;
+use miku_hyper::server::conn::http2;
 use std::cell::Cell;
 use std::net::SocketAddr;
 use std::rc::Rc;
 use tokio::io::{self, AsyncWriteExt};
 use tokio::net::TcpListener;
 
-use hyper::body::{Body as HttpBody, Bytes, Frame};
-use hyper::service::service_fn;
-use hyper::Request;
-use hyper::{Error, Response};
+use miku_hyper::body::{Body as HttpBody, Bytes, Frame};
+use miku_hyper::service::service_fn;
+use miku_hyper::Request;
+use miku_hyper::{Error, Response};
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -86,7 +86,7 @@ fn main() {
         local
             .block_on(
                 &rt,
-                http2_client("http://localhost:3000".parse::<hyper::Uri>().unwrap()),
+                http2_client("http://localhost:3000".parse::<miku_hyper::Uri>().unwrap()),
             )
             .unwrap();
     });
@@ -115,7 +115,7 @@ fn main() {
         local
             .block_on(
                 &rt,
-                http1_client("http://localhost:3001".parse::<hyper::Uri>().unwrap()),
+                http1_client("http://localhost:3001".parse::<miku_hyper::Uri>().unwrap()),
             )
             .unwrap();
     });
@@ -150,7 +150,7 @@ async fn http1_server() -> Result<(), Box<dyn std::error::Error>> {
         });
 
         tokio::task::spawn_local(async move {
-            if let Err(err) = hyper::server::conn::http1::Builder::new()
+            if let Err(err) = miku_hyper::server::conn::http1::Builder::new()
                 .serve_connection(io, service)
                 .await
             {
@@ -160,7 +160,7 @@ async fn http1_server() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-async fn http1_client(url: hyper::Uri) -> Result<(), Box<dyn std::error::Error>> {
+async fn http1_client(url: miku_hyper::Uri) -> Result<(), Box<dyn std::error::Error>> {
     let host = url.host().expect("uri has no host");
     let port = url.port_u16().unwrap_or(80);
     let addr = format!("{}:{}", host, port);
@@ -168,7 +168,7 @@ async fn http1_client(url: hyper::Uri) -> Result<(), Box<dyn std::error::Error>>
 
     let io = IOTypeNotSend::new(TokioIo::new(stream));
 
-    let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await?;
+    let (mut sender, conn) = miku_hyper::client::conn::http1::handshake(io).await?;
 
     tokio::task::spawn_local(async move {
         if let Err(err) = conn.await {
@@ -187,7 +187,7 @@ async fn http1_client(url: hyper::Uri) -> Result<(), Box<dyn std::error::Error>>
     for _ in 0..4 {
         let req = Request::builder()
             .uri(url.clone())
-            .header(hyper::header::HOST, authority.as_str())
+            .header(miku_hyper::header::HOST, authority.as_str())
             .body(Body::from("test".to_string()))?;
 
         let mut res = sender.send_request(req).await?;
@@ -261,7 +261,7 @@ async fn http2_server() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-async fn http2_client(url: hyper::Uri) -> Result<(), Box<dyn std::error::Error>> {
+async fn http2_client(url: miku_hyper::Uri) -> Result<(), Box<dyn std::error::Error>> {
     let host = url.host().expect("uri has no host");
     let port = url.port_u16().unwrap_or(80);
     let addr = format!("{}:{}", host, port);
@@ -269,7 +269,7 @@ async fn http2_client(url: hyper::Uri) -> Result<(), Box<dyn std::error::Error>>
 
     let stream = IOTypeNotSend::new(TokioIo::new(stream));
 
-    let (mut sender, conn) = hyper::client::conn::http2::handshake(LocalExec, stream).await?;
+    let (mut sender, conn) = miku_hyper::client::conn::http2::handshake(LocalExec, stream).await?;
 
     tokio::task::spawn_local(async move {
         if let Err(err) = conn.await {
@@ -288,7 +288,7 @@ async fn http2_client(url: hyper::Uri) -> Result<(), Box<dyn std::error::Error>>
     for _ in 0..4 {
         let req = Request::builder()
             .uri(url.clone())
-            .header(hyper::header::HOST, authority.as_str())
+            .header(miku_hyper::header::HOST, authority.as_str())
             .body(Body::from("test".to_string()))?;
 
         let mut res = sender.send_request(req).await?;
@@ -324,7 +324,7 @@ async fn http2_client(url: hyper::Uri) -> Result<(), Box<dyn std::error::Error>>
 #[derive(Clone, Copy, Debug)]
 struct LocalExec;
 
-impl<F> hyper::rt::Executor<F> for LocalExec
+impl<F> miku_hyper::rt::Executor<F> for LocalExec
 where
     F: std::future::Future + 'static, // not requiring `Send`
 {
@@ -348,7 +348,7 @@ impl IOTypeNotSend {
     }
 }
 
-impl hyper::rt::Write for IOTypeNotSend {
+impl miku_hyper::rt::Write for IOTypeNotSend {
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -372,11 +372,11 @@ impl hyper::rt::Write for IOTypeNotSend {
     }
 }
 
-impl hyper::rt::Read for IOTypeNotSend {
+impl miku_hyper::rt::Read for IOTypeNotSend {
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
-        buf: hyper::rt::ReadBufCursor<'_>,
+        buf: miku_hyper::rt::ReadBufCursor<'_>,
     ) -> Poll<std::io::Result<()>> {
         Pin::new(&mut self.stream).poll_read(cx, buf)
     }
